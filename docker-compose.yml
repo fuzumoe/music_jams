@@ -1,0 +1,57 @@
+version: '3.8'
+
+volumes:
+  postgres-data:
+    driver: local
+  pgadmin-data:
+    driver: local
+
+services:
+  postgres:
+    image: postgres:12.2
+    restart: always
+    environment:
+      POSTGRES_DB: music_jam
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: s0m3_Th1ng
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "test@test.com"
+      PGADMIN_DEFAULT_PASSWORD: "admin"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+
+  backend:
+    env_file:
+      - .env
+    restart: always
+    image: music_jam:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/code/
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    environment:
+      ENVIRONMENT: development
+      DJANGO_ALLOWED_HOSTS: localhost 127.0.0.1 [::1]
+      DJANGO_SETTINGS_MODULE: "music_jam.settings.common"
+      SQL_ENGINE: "django.db.backends.postgresql"
+      SQL_DATABASE: music_jam
+      SQL_USER: postgres
+      SQL_PASSWORD: s0m3_Th1ng
+      SQL_HOST: postgres
+      SQL_PORT: 5432
